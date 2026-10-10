@@ -1,0 +1,17 @@
+{
+  "name": "impact-radius",
+  "owner": {
+    "name": "pablodiazjorge"
+  },
+  "metadata": {
+    "description": "A Claude Code mod that holds risky shell commands and shows what they would change before they run"
+  },
+  "plugins": [
+    {
+      "name": "impact-radius",
+      "description": "Holds risky shell commands and third-party installs for the whole user or system, shows what they would change and waits for Run or Cancel. Bash and PowerShell.",
+      "source": "./",
+      "category": "security"
+    }
+  ]
+}
