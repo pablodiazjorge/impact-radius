@@ -13,8 +13,12 @@
 
 <p align="center"><a href="README.md">Read in English</a></p>
 
-<!-- Captura: el panel en tema claro, en castellano (media/pane-light.es.png) -->
-<!-- Captura: el panel en tema oscuro, en castellano (media/pane-dark.es.png) -->
+<p align="center">
+  <img src="media/pane-light.png" alt="El panel de impact-radius en tema claro, reteniendo Remove-Item -Recurse -Force: borraría 14 archivos (1,8 MB), con Cancelar seleccionado y Ejecutar al lado. Captura con el idioma en inglés" width="430">
+  <img src="media/pane-dark.png" alt="El mismo panel en tema oscuro" width="430">
+</p>
+
+<p align="center">Las capturas están con el idioma en inglés; con <code>Language: Español</code>, el panel sale en castellano.</p>
 
 A veces Claude ejecuta órdenes que pueden destrozar trabajo o meter software de terceros en todo tu equipo: un borrado recursivo, `git reset --hard`, un push forzado, `npm install -g`, `curl … | sh`. impact-radius las retiene antes de que se ejecuten, mide qué cambiarían y te pregunta. Mientras, Claude espera.
 
@@ -42,6 +46,10 @@ Lo que se instala fuera del proyecto queda disponible en todas tus sesiones y es
 - **PowerShell:** `Install-Module`, `Install-Package`, `Install-Script`, `Install-PSResource` y `Update-Module`, diciendo si es para tu usuario o para todos (`-Scope AllUsers`).
 - **Editores y Claude Code:** `code --install-extension` (también Cursor y VSCodium), `claude plugin install` con ámbito de usuario (el de por defecto) y `claude mcp add --scope user`.
 - **Instaladores de internet que se ejecutan sin guardarse:** `curl … | sh`, `wget -qO- … | bash`, `curl … | python3 -`, `irm … | iex`, `bash -c "$(curl …)"` e `iex ((New-Object Net.WebClient).DownloadString(…))`. Enseña de dónde viene el script.
+
+<p align="center">
+  <img src="media/install-dark.png" alt="El panel reteniendo npm install -g typescript@latest cowsay: typescript ya está instalado en la 7.0.2 y cowsay es nuevo" width="560">
+</p>
 
 Pasa sin preguntar lo que se queda en el proyecto: `npm install` sin `-g`, `yarn add`, `pip install` dentro de un entorno virtual (activado en la sesión, en la misma orden o usando el `pip` de `.venv`), `uv pip install`, `pip install --target`, `claude plugin install --scope project` o `claude mcp add` sin `--scope user`. Tampoco retiene descargar y leer datos, como `curl … | jq` o `curl … | python3 -m json.tool`.
 
