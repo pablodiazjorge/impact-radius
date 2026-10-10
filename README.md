@@ -13,8 +13,10 @@
 
 <p align="center"><a href="README.es.md">Leer en español</a></p>
 
-<!-- Screenshot: the pane in a light theme (media/pane-light.png) -->
-<!-- Screenshot: the pane in a dark theme (media/pane-dark.png) -->
+<p align="center">
+  <img src="media/pane-light.png" alt="The impact-radius pane in a light theme, holding Remove-Item -Recurse -Force: it would delete 14 files (1.8 MB), with Cancel focused and Run beside it" width="430">
+  <img src="media/pane-dark.png" alt="The same pane in a dark theme" width="430">
+</p>
 
 Claude sometimes runs commands that can wreck work or put someone else's software on your whole machine: a recursive delete, `git reset --hard`, a force push, `npm install -g`, `curl … | sh`. impact-radius holds those commands before they run, measures what they would change, and asks you. Claude waits for your answer.
 
@@ -43,6 +45,10 @@ What gets installed outside the project is there for every session, and it's som
 - **Editors and Claude Code:** `code --install-extension` (also Cursor and VSCodium), `claude plugin install` at user scope (the default) and `claude mcp add --scope user`.
 - **Installers from the internet that run without being saved:** `curl … | sh`, `wget -qO- … | bash`, `curl … | python3 -`, `irm … | iex`, `bash -c "$(curl …)"` and `iex ((New-Object Net.WebClient).DownloadString(…))`. It shows where the script comes from.
 
+<p align="center">
+  <img src="media/install-dark.png" alt="The pane holding npm install -g typescript@latest cowsay: typescript is already installed at 7.0.2 and cowsay is new" width="560">
+</p>
+
 What stays in the project goes through without a question: `npm install` without `-g`, `yarn add`, `pip install` inside a virtual environment (active in the session, activated in the same command, or using the `pip` of `.venv`), `uv pip install`, `pip install --target`, `claude plugin install --scope project` or `claude mcp add` without `--scope user`. Downloading and reading data isn't held either, like `curl … | jq` or `curl … | python3 -m json.tool`.
 
 It follows `cd`, `Set-Location`, `pushd`/`popd` and `git -C` on the same line, to measure in the right folder. Commands that only read (`git status`, `Get-ChildItem`, `rm` of a single file without options, `Remove-Item -WhatIf`, `git clean -n`…) go through without opening anything. When a line holds several risky commands, the pane measures the first and names the others, because Run approves the whole line.
@@ -61,8 +67,6 @@ One held command at a time: another one (a subagent's, say) waits for your answe
 
 - Cancel comes first and has the focus, so Enter never runs anything by accident. On the terminal the buttons show their keys (`c` Cancel, `r` Run); the desktop app draws its own buttons, with Cancel as the main one.
 - Every word is in the theme's text color, the only one that keeps a 7:1 contrast (WCAG AAA) in light and dark themes. Color goes to the border and the icons.
-
-<!-- Screenshot: the notice above the prompt when the pane doesn't fit (media/band.png) -->
 
 ## Language
 

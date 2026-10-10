@@ -13,8 +13,8 @@
 
 <p align="center"><a href="README.md">Read in English</a></p>
 
-<!-- Captura: el panel en tema claro (media/pane-light.png) -->
-<!-- Captura: el panel en tema oscuro (media/pane-dark.png) -->
+<!-- Captura: el panel en tema claro, en castellano (media/pane-light.es.png) -->
+<!-- Captura: el panel en tema oscuro, en castellano (media/pane-dark.es.png) -->
 
 A veces Claude ejecuta órdenes que pueden destrozar trabajo o meter software de terceros en todo tu equipo: un borrado recursivo, `git reset --hard`, un push forzado, `npm install -g`, `curl … | sh`. impact-radius las retiene antes de que se ejecuten, mide qué cambiarían y te pregunta. Mientras, Claude espera.
 
@@ -61,8 +61,6 @@ Una orden retenida cada vez: otra (la de un subagente, por ejemplo) espera a que
 
 - Cancelar va primero y tiene el foco, así que Intro nunca ejecuta nada por despiste. En la terminal los botones enseñan su tecla (`c` Cancelar, `e` Ejecutar); la app de escritorio dibuja sus propios botones, con Cancelar como principal.
 - Todo el texto va en el color de texto del tema, el único que mantiene un contraste de 7:1 (WCAG AAA) en los temas claros y oscuros. El color queda para el marco y los iconos.
-
-<!-- Captura: el aviso sobre el prompt cuando el panel no cabe (media/band.png) -->
 
 ## Idioma
 

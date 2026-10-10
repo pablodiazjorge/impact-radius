@@ -70,8 +70,9 @@ const world = (on: On, options: WorldOptions = {}) => {
 
   on('session.cwd', () => ({ value: windows ? 'C:\\project' : '/home/me/project' }))
   on('session.surfaces', () => ({ value: options.surfaces ?? ['desktop'] }))
-  // The engine hands paths over with the system's slashes.
-  const key = (path: string) => path.replace(/\\/g, '/')
+  // The engine hands paths over with the system's slashes, and off Windows it makes a drive path
+  // relative (`/home/runner/…/C:/project`): keep what starts at the drive letter.
+  const key = (path: string) => path.replace(/\\/g, '/').replace(/^.*?(?=[A-Za-z]:\/)/, '')
   on('fs.stat', ($, e) => {
     const n = files.get(key(e.path))
     if (!n) throw new Error(`ENOENT: ${e.path}`)
