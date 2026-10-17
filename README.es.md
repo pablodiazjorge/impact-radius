@@ -6,7 +6,7 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/Claude_Code-%E2%89%A5_2.1.293-D97757?logo=claude&logoColor=fff" alt="Claude Code 2.1.293 o posterior">
-  <img src="https://img.shields.io/badge/version-1.0.0-blue" alt="Versión">
+  <img src="https://img.shields.io/badge/version-1.1.0-blue" alt="Versión">
   <img src="https://img.shields.io/badge/type-mod-6f42c1" alt="Mod de Claude Code">
   <img src="https://img.shields.io/badge/license-MIT-green" alt="Licencia">
 </p>
@@ -52,6 +52,8 @@ Lo que se instala fuera del proyecto queda disponible en todas tus sesiones y es
 </p>
 
 Pasa sin preguntar lo que se queda en el proyecto: `npm install` sin `-g`, `yarn add`, `pip install` dentro de un entorno virtual (activado en la sesión, en la misma orden o usando el `pip` de `.venv`), `uv pip install`, `pip install --target`, `claude plugin install --scope project` o `claude mcp add` sin `--scope user`. Tampoco retiene descargar y leer datos, como `curl … | jq` o `curl … | python3 -m json.tool`.
+
+No retiene un borrado recursivo dentro de la carpeta temporal del sistema, que es donde Claude guarda sus archivos de trabajo: cada destino tiene que estar dentro de `TEMP`, `TMP` o `TMPDIR` (o de `/tmp` y `/var/tmp` en Linux y macOS), existir y no contener enlaces simbólicos ni puntos de unión. La propia carpeta temporal, un comodín justo debajo de ella, una ruta hecha con cualquier otra variable y un borrado demasiado grande para contarlo se siguen reteniendo. La orden pasa entonces a la comprobación de permisos de Claude Code, como cualquier otra.
 
 Sigue los `cd`, `Set-Location`, `pushd`/`popd` y `git -C` de la misma línea para medir en la carpeta correcta. Lo que solo lee (`git status`, `Get-ChildItem`, `rm` de un archivo sin opciones, `Remove-Item -WhatIf`, `git clean -n`…) pasa sin abrir nada. Si una línea lleva varias órdenes arriesgadas, el panel mide la primera y nombra las demás, porque Ejecutar aprueba la línea entera.
 

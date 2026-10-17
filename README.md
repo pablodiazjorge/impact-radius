@@ -6,7 +6,7 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/Claude_Code-%E2%89%A5_2.1.293-D97757?logo=claude&logoColor=fff" alt="Claude Code 2.1.293 or newer">
-  <img src="https://img.shields.io/badge/version-1.0.0-blue" alt="Version">
+  <img src="https://img.shields.io/badge/version-1.1.0-blue" alt="Version">
   <img src="https://img.shields.io/badge/type-mod-6f42c1" alt="Claude Code mod">
   <img src="https://img.shields.io/badge/license-MIT-green" alt="License">
 </p>
@@ -50,6 +50,8 @@ What gets installed outside the project is there for every session, and it's som
 </p>
 
 What stays in the project goes through without a question: `npm install` without `-g`, `yarn add`, `pip install` inside a virtual environment (active in the session, activated in the same command, or using the `pip` of `.venv`), `uv pip install`, `pip install --target`, `claude plugin install --scope project` or `claude mcp add` without `--scope user`. Downloading and reading data isn't held either, like `curl … | jq` or `curl … | python3 -m json.tool`.
+
+A recursive delete inside the system's temporary folder isn't held, because that is where Claude keeps its scratch files: every target has to lie below `TEMP`, `TMP` or `TMPDIR` (or `/tmp` and `/var/tmp` on Linux and macOS), exist, and hold no symbolic link or junction. The temporary folder itself, a wildcard right under it, a path built from any other variable and a delete too big to count are still held. The command then goes on to Claude Code's own permission check, like any other command.
 
 It follows `cd`, `Set-Location`, `pushd`/`popd` and `git -C` on the same line, to measure in the right folder. Commands that only read (`git status`, `Get-ChildItem`, `rm` of a single file without options, `Remove-Item -WhatIf`, `git clean -n`…) go through without opening anything. When a line holds several risky commands, the pane measures the first and names the others, because Run approves the whole line.
 

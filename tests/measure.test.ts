@@ -44,8 +44,22 @@ describe('measure', () => {
       bytes: 3058,
       sample: ['build/a.js', 'build/c.log', 'build/sub/b.js'],
       truncated: false,
+      links: 0,
     })
     expect(await measure(risk('rm -rf build/*.log'), '/p', probe)).toMatchObject({ files: 1, sample: ['build/c.log'] })
+  })
+
+  test('a delete counts symbolic links and junctions, the target and inside it, without following them', async () => {
+    const { probe } = fakeProbe({ '/p/out': 'dir', '/p/out/a.js': 10 })
+    const links = new Set(['/p/out/shared', '/p/alias'])
+    const linked: typeof probe = {
+      ...probe,
+      stat: async path => (links.has(path) ? { kind: 'dir', size: 0, isLink: true } : probe.stat(path)),
+      list: async dir => [...((await probe.list(dir)) ?? []), ...(dir === '/p/out' ? [{ name: 'shared', kind: 'dir', size: 0, isLink: true }] : [])],
+    }
+    expect(await measure(risk('rm -rf out'), '/p', linked)).toMatchObject({ files: 2, links: 1 })
+    expect(await measure(risk('rm -rf alias'), '/p', linked)).toMatchObject({ files: 1, links: 1 })
+    expect(await measure(risk('rm -rf out/a.js'), '/p', linked)).toMatchObject({ files: 1, links: 0 })
   })
 
   test('git runs in English, whatever the locale, because its output is parsed', async () => {

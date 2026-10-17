@@ -1,6 +1,6 @@
 {
   "name": "impact-radius",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Holds risky shell commands (recursive deletes, git reset --hard, git clean, force pushes, discarded changes, migrations and third-party installs for the whole user or system), shows what they would change and waits for you to press Run or Cancel. Bash and PowerShell, on Windows, macOS and Linux.",
   "author": {
     "name": "pablodiazjorge"

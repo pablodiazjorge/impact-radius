@@ -25,7 +25,7 @@ const BAND_PROPS = {
   view: {},
 }
 
-type Node = { kind: 'file' | 'dir'; size?: number }
+type Node = { kind: 'file' | 'dir'; size?: number; link?: boolean }
 type Output = { stdout?: string; stderr?: string; exitCode?: number }
 
 type WorldOptions = {
@@ -66,7 +66,7 @@ const world = (on: On, options: WorldOptions = {}) => {
   const opened: string[] = []
   const closed: string[] = []
   const files = new Map(Object.entries(options.files ?? {}))
-  const node = (path: string, n: Node) => ({ name: path.slice(path.lastIndexOf('/') + 1), kind: n.kind, size: n.size ?? 0, mtimeMs: 0, isLink: false })
+  const node = (path: string, n: Node) => ({ name: path.slice(path.lastIndexOf('/') + 1), kind: n.kind, size: n.size ?? 0, mtimeMs: 0, isLink: n.link === true })
 
   on('session.cwd', () => ({ value: windows ? 'C:\\project' : '/home/me/project' }))
   on('session.surfaces', () => ({ value: options.surfaces ?? ['desktop'] }))
@@ -131,7 +131,38 @@ const BUILD: Record<string, Node> = {
   'C:/project/build/sub/b.js': { kind: 'file', size: 2048 },
 }
 
+const TEMP = 'C:\\Users\\me\\AppData\\Local\\Temp'
+const SCRATCH: Record<string, Node> = {
+  'C:/Users/me/AppData/Local/Temp': { kind: 'dir' },
+  'C:/Users/me/AppData/Local/Temp/claude': { kind: 'dir' },
+  'C:/Users/me/AppData/Local/Temp/claude/x': { kind: 'dir' },
+  'C:/Users/me/AppData/Local/Temp/claude/x/notes.md': { kind: 'file', size: 500 },
+}
+
 describe('impact-radius', () => {
+  test('a recursive delete inside the temporary folder is not held: it goes on to the engine', async ($, on) => {
+    const w = world(on, { files: SCRATCH, env: { TEMP, TMP: TEMP } })
+    expect((await $.tool.check(call('PowerShell', 'Remove-Item -Recurse -Force $env:TEMP\\claude\\x'))).decision).toBe('ask')
+    expect((await $.tool.check(call('Bash', 'rm -rf /c/Users/me/AppData/Local/Temp/claude/x'))).decision).toBe('ask')
+    // The engine's verdict still stands: the mod only stops holding it.
+    expect(w.opened).toEqual([])
+  })
+
+  test('the temporary folder itself, a link inside it or another risk on the line is still held', async ($, on) => {
+    const linked = { ...SCRATCH, 'C:/Users/me/AppData/Local/Temp/claude/x/project': { kind: 'dir', link: true } as Node }
+    const w = world(on, { files: linked, env: { TEMP } })
+    for (const command of ['Remove-Item -Recurse -Force $env:TEMP', 'Remove-Item -Recurse $env:TEMP\\claude\\x', 'Remove-Item -Recurse $env:TEMP\\claude\\x; git reset --hard']) {
+      const pending = $.tool.check(call('PowerShell', command))
+      await until(w.clock, () => w.opened.length > 0)
+      const pane = await $.ui.mount({ plugin: 'impact-radius', surface: 'desktop', component: 'Pane', requestId: PANE, props: PANE_PROPS })
+      await pane.press({ key: 'cancel' })
+      await w.clock.advance(300)
+      expect((await pending).decision).toBe('deny')
+      await pane.unmount()
+      w.opened.length = 0
+    }
+  })
+
   test('holds a Remove-Item -Recurse, shows what it would delete, and Run allows it with no second question', async ($, on) => {
     const w = world(on, { files: BUILD })
     const pending = $.tool.check(call('PowerShell', 'Remove-Item -Recurse -Force build'))

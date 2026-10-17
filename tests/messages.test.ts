@@ -15,14 +15,14 @@ const noInstalled: Facts = { kind: 'install', installed: null }
 
 describe('Spanish: the words of radio-de-impacto 0.3.0, unchanged', () => {
   test('summaries, lines and notes', () => {
-    const deleted: Facts = { kind: 'delete', targets: ['build'], found: 1, files: 2, bytes: 3072, sample: ['build/a.js', 'build/sub/b.js'], truncated: false }
+    const deleted: Facts = { kind: 'delete', targets: ['build'], found: 1, files: 2, bytes: 3072, sample: ['build/a.js', 'build/sub/b.js'], truncated: false, links: 0 }
     expect(report(risk('Remove-Item -Recurse -Force build', 'powershell'), deleted, 'es')).toEqual({
       summary: 'borraría 2 archivos (3,0\u00a0KB)',
       lines: ['build/a.js', 'build/sub/b.js'],
       more: 0,
       note: 'Rutas: build',
     })
-    expect(summary('rm -rf /home/yo/proyecto/no-existe', { kind: 'delete', targets: ['/home/yo/proyecto/no-existe'], found: 0, files: 0, bytes: 0, sample: [], truncated: false }, 'es')).toBe(
+    expect(summary('rm -rf /home/yo/proyecto/no-existe', { kind: 'delete', targets: ['/home/yo/proyecto/no-existe'], found: 0, files: 0, bytes: 0, sample: [], truncated: false, links: 0 }, 'es')).toBe(
       'no borraría nada: no existe /home/yo/proyecto/no-existe',
     )
     expect(summary('git reset --hard', { kind: 'discard', ok: true, files: [' M a.ts', 'M  b.ts'], commits: [], shortstat: '', error: '' }, 'es')).toBe(
@@ -63,7 +63,7 @@ describe('Spanish: the words of radio-de-impacto 0.3.0, unchanged', () => {
 
 describe('English', () => {
   test('summaries, lines and notes', () => {
-    const deleted: Facts = { kind: 'delete', targets: ['build'], found: 1, files: 25_000, bytes: 3 * 1024 ** 3, sample: Array.from({ length: 10 }, (_, i) => `build/${i}.js`), truncated: true }
+    const deleted: Facts = { kind: 'delete', targets: ['build'], found: 1, files: 25_000, bytes: 3 * 1024 ** 3, sample: Array.from({ length: 10 }, (_, i) => `build/${i}.js`), truncated: true, links: 0 }
     expect(report(risk('rm -rf build'), deleted, 'en')).toMatchObject({
       summary: 'deletes at least 25,000 files (3.0\u00a0GB)',
       more: 24_990,

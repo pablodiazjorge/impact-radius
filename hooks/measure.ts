@@ -22,7 +22,7 @@ export type Probe = {
 
 export type Facts =
   | { kind: 'unmeasured'; reason: 'missing-dir' | 'error'; detail: string }
-  | { kind: 'delete'; targets: string[]; found: number; files: number; bytes: number; sample: string[]; truncated: boolean }
+  | { kind: 'delete'; targets: string[]; found: number; files: number; bytes: number; sample: string[]; truncated: boolean; links: number }
   | { kind: 'clean'; ok: boolean; paths: string[]; error: string }
   | { kind: 'discard'; ok: boolean; files: string[]; commits: string[]; shortstat: string; error: string }
   | { kind: 'push'; target: string; source: string; known: boolean; commits: string[] }
@@ -71,6 +71,8 @@ async function measureDelete(targets: string[], cwd: string, probe: Probe): Prom
   let bytes = 0
   let found = 0
   let truncated = false
+  // Symbolic links and junctions, counted but never followed: Windows PowerShell's Remove-Item -Recurse can delete through one.
+  let links = 0
   const count = (path: string, size: number) => {
     files++
     bytes += size
@@ -83,6 +85,7 @@ async function measureDelete(targets: string[], cwd: string, probe: Probe): Prom
       found++
       const st = await probe.stat(path)
       if (st === null) continue
+      if (st.isLink) links++
       if (st.kind !== 'dir' || st.isLink) {
         count(path, st.size)
         continue
@@ -93,6 +96,7 @@ async function measureDelete(targets: string[], cwd: string, probe: Probe): Prom
         for (const dir of level) {
           for (const e of (await probe.list(dir)) ?? []) {
             const child = `${dir.replace(/\/$/, '')}/${e.name}`
+            if (e.isLink) links++
             if (e.kind === 'dir' && !e.isLink) below.push(child)
             else count(child, e.size)
             if (truncated) break
@@ -106,7 +110,7 @@ async function measureDelete(targets: string[], cwd: string, probe: Probe): Prom
       }
     }
   }
-  return { kind: 'delete', targets, found, files, bytes, sample, truncated }
+  return { kind: 'delete', targets, found, files, bytes, sample, truncated, links }
 }
 
 // ---------------------------------------------------------------------------

@@ -13,6 +13,7 @@ import { classify, type Risk } from './classify'
 import { type Facts, measure, type Probe } from './measure'
 import { denyReason, type Lang, langOf, type Reason, type Report, report, words } from './messages'
 import { resolvePath, type Shell } from './shell'
+import { temporaryPath, temporaryRoots, type TemporaryVariables } from './temp'
 
 const PANE = 'impact-radius'
 const WAIT_MAX_MS = 10 * 60 * 1000
@@ -79,6 +80,30 @@ async function realDir($: EngineInterface, base: string, dir: string): Promise<s
     return (await $.fs.stat(path)).kind === 'dir' ? path : null
   } catch {
     return null
+  }
+}
+
+/**
+ * Whether a delete only touches the system's temporary folder, where Claude keeps its scratch files:
+ * every target lies below TEMP, TMP, TMPDIR, /tmp or /var/tmp, exists, and holds no symbolic link or
+ * junction, and the walk counted everything. Anything unknown or failing keeps the delete held.
+ */
+async function temporaryDelete($: EngineInterface, risk: Risk, base: string, shell: Shell): Promise<boolean> {
+  if (risk.kind !== 'delete' || risk.targets.length === 0) return false
+  try {
+    const windows = await isWindows($)
+    const vars: TemporaryVariables = { TEMP: await $.env.get('TEMP'), TMP: await $.env.get('TMP'), TMPDIR: await $.env.get('TMPDIR') }
+    const roots = temporaryRoots(vars, windows)
+    if (roots.length === 0) return false
+    const cwd = risk.dir ? await realDir($, base, risk.dir) : base
+    if (cwd === null) return false
+    const home = await homeOf($)
+    const paths = risk.targets.map(target => temporaryPath(target, cwd, home, vars, roots, shell, windows))
+    if (paths.some(path => path === null)) return false
+    const facts = await measure({ ...risk, targets: paths as string[] }, cwd, await probe($))
+    return facts.kind === 'delete' && !facts.truncated && facts.links === 0 && facts.found >= risk.targets.length
+  } catch {
+    return false
   }
 }
 
@@ -211,6 +236,13 @@ export const register: Register = (on, options) => {
     // pip without `--user` inside a virtual environment installs into the project.
     const venvDependent = (r: Risk) => r.kind === 'install' && r.venvDependent === true
     if (risks.some(venvDependent) && (await inVirtualEnv($))) risks = risks.filter(r => !venvDependent(r))
+    // A delete inside the temporary folder isn't held: the command goes on to the engine's own check.
+    if (risks.some(r => r.kind === 'delete')) {
+      const base = (await $.session.cwd()).replace(/\\/g, '/')
+      const kept: Risk[] = []
+      for (const r of risks) if (!(await temporaryDelete($, r, base, shellOf(e.tool)))) kept.push(r)
+      risks = kept
+    }
     const first = risks[0]
     if (first === undefined) return next(e)
     // When the person's rules already forbid it, there is nothing to ask.
@@ -273,7 +305,8 @@ export const register: Register = (on, options) => {
     return { decision: 'deny', reason: denyReason(mine.decision ?? 'error', effectOf(mine), lang) }
   }).catch(($, e, next) => {
     if (e.tool !== 'Bash' && e.tool !== 'PowerShell') return next(e)
-    // Not run: the call came in beneath one this hook is holding. Only a risky one is stopped.
+    // Not run: the call came in beneath one this hook is holding. Only a risky one is stopped; a
+    // delete in the temporary folder is stopped too, since nothing can be measured from here.
     if (next.error.kind === 're-entry') {
       const risks = e.tool_use_id ? classify(commandOf(e.input), shellOf(e.tool)) : []
       const first = risks[0]
