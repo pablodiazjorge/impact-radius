@@ -6,7 +6,7 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/Claude_Code-%E2%89%A5_2.1.293-D97757?logo=claude&logoColor=fff" alt="Claude Code 2.1.293 or newer">
-  <img src="https://img.shields.io/badge/version-1.1.0-blue" alt="Version">
+  <img src="https://img.shields.io/badge/version-1.1.1-blue" alt="Version">
   <img src="https://img.shields.io/badge/type-mod-6f42c1" alt="Claude Code mod">
   <img src="https://img.shields.io/badge/license-MIT-green" alt="License">
 </p>
@@ -54,6 +54,18 @@ What stays in the project goes through without a question: `npm install` without
 A recursive delete inside the system's temporary folder isn't held, because that is where Claude keeps its scratch files: every target has to lie below `TEMP`, `TMP` or `TMPDIR` (or `/tmp` and `/var/tmp` on Linux and macOS), exist, and hold no symbolic link or junction. The temporary folder itself, a wildcard right under it, a path built from any other variable and a delete too big to count are still held. The command then goes on to Claude Code's own permission check, like any other command.
 
 It follows `cd`, `Set-Location`, `pushd`/`popd` and `git -C` on the same line, to measure in the right folder. Commands that only read (`git status`, `Get-ChildItem`, `rm` of a single file without options, `Remove-Item -WhatIf`, `git clean -n`…) go through without opening anything. When a line holds several risky commands, the pane measures the first and names the others, because Run approves the whole line.
+
+## What it does not catch
+
+impact-radius reads the command line as text and sandboxes nothing. It is a safety net for honest mistakes, not a security boundary: a command it doesn't recognize, or one written to get around it, goes on to Claude Code's own permission check like any other. Known gaps today:
+
+- **Deletes with a wildcard but without recursive or force options**, also when a pipe feeds them: `rm *.log`, `Remove-Item *`, `Get-ChildItem -Recurse *.log | Remove-Item`.
+- **Discarding changes to named paths:** `git checkout -- src/app.ts`, `git restore src/`. Only `.` is held.
+- **Commands inside another shell:** `bash -c "rm -rf build"`, `pwsh -Command "Remove-Item -Recurse build"`, `cmd /c rd /s /q build`, `eval "git reset --hard"`, `Invoke-Expression "…"`. The one exception is an installer downloaded on the spot, such as `bash -c "$(curl …)"`, which is held as a third-party install.
+- **Other destructive commands:** `find . -name "*.log" -delete`, `git branch -D feature`, `git stash drop`.
+- **Scripts and other tools:** what a program deletes on its own (`npm run clean`, `python -c "import shutil; shutil.rmtree('build')"`, `[IO.Directory]::Delete('build', $true)`) and the files Claude changes with its own tools, such as Write and Edit.
+
+For real isolation, use Claude Code's sandbox, a container or a throwaway worktree.
 
 ## How it works
 

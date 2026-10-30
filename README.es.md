@@ -6,7 +6,7 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/Claude_Code-%E2%89%A5_2.1.293-D97757?logo=claude&logoColor=fff" alt="Claude Code 2.1.293 o posterior">
-  <img src="https://img.shields.io/badge/version-1.1.0-blue" alt="Versión">
+  <img src="https://img.shields.io/badge/version-1.1.1-blue" alt="Versión">
   <img src="https://img.shields.io/badge/type-mod-6f42c1" alt="Mod de Claude Code">
   <img src="https://img.shields.io/badge/license-MIT-green" alt="Licencia">
 </p>
@@ -56,6 +56,18 @@ Pasa sin preguntar lo que se queda en el proyecto: `npm install` sin `-g`, `yarn
 No retiene un borrado recursivo dentro de la carpeta temporal del sistema, que es donde Claude guarda sus archivos de trabajo: cada destino tiene que estar dentro de `TEMP`, `TMP` o `TMPDIR` (o de `/tmp` y `/var/tmp` en Linux y macOS), existir y no contener enlaces simbólicos ni puntos de unión. La propia carpeta temporal, un comodín justo debajo de ella, una ruta hecha con cualquier otra variable y un borrado demasiado grande para contarlo se siguen reteniendo. La orden pasa entonces a la comprobación de permisos de Claude Code, como cualquier otra.
 
 Sigue los `cd`, `Set-Location`, `pushd`/`popd` y `git -C` de la misma línea para medir en la carpeta correcta. Lo que solo lee (`git status`, `Get-ChildItem`, `rm` de un archivo sin opciones, `Remove-Item -WhatIf`, `git clean -n`…) pasa sin abrir nada. Si una línea lleva varias órdenes arriesgadas, el panel mide la primera y nombra las demás, porque Ejecutar aprueba la línea entera.
+
+## Qué se le escapa
+
+impact-radius lee la línea de órdenes como texto y no aísla nada. Es una red de seguridad para los despistes, no una barrera de protección: una orden que no reconoce, o una escrita para esquivarlo, pasa a la comprobación de permisos de Claude Code como cualquier otra. Huecos conocidos a día de hoy:
+
+- **Borrados con comodín y sin `-r`, `-f`, `-Recurse` ni `-Force`**, también cuando les llega la lista por una tubería: `rm *.log`, `Remove-Item *`, `Get-ChildItem -Recurse *.log | Remove-Item`.
+- **Descartar los cambios de rutas concretas:** `git checkout -- src/app.ts`, `git restore src/`. Solo retiene `.`.
+- **Órdenes dentro de otra consola:** `bash -c "rm -rf build"`, `pwsh -Command "Remove-Item -Recurse build"`, `cmd /c rd /s /q build`, `eval "git reset --hard"`, `Invoke-Expression "…"`. La única excepción es un instalador que se descarga en el momento, como `bash -c "$(curl …)"`, que se retiene como instalación de terceros.
+- **Otras órdenes destructivas:** `find . -name "*.log" -delete`, `git branch -D feature`, `git stash drop`.
+- **Scripts y otras herramientas:** lo que un programa borra por su cuenta (`npm run clean`, `python -c "import shutil; shutil.rmtree('build')"`, `[IO.Directory]::Delete('build', $true)`) y los archivos que Claude cambia con sus propias herramientas, como Write y Edit.
+
+Para aislar de verdad, usa el sandbox de Claude Code, un contenedor o un worktree desechable.
 
 ## Cómo funciona
 
